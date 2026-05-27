@@ -1,0 +1,21 @@
+# Test-profile overrides. Picked up automatically when @ActiveProfiles("test").
+# The base application.yml already disables Flyway for the "test" profile and
+# routes the datasource to H2; this file adds the values our beans require to
+# construct (jwt secret, admin credentials, CORS) without depending on the
+# host environment.
+
+app:
+  jwt:
+    secret: this-is-a-test-only-secret-32bytes-min-aaaaaaaaaa
+    expiration-minutes: 60
+    issuer: motoshop-api-test
+  admin:
+    email: [email protected]
+    password: test-admin-pw
+  cors:
+    allowed-origins: http://localhost:4200,http://localhost:4300
+
+logging:
+  level:
+    org.springframework.security: WARN
+    org.hibernate.SQL: WARN

@@ -1,17 +1,23 @@
+# MotoShop - Sprint 1
+#
+# Three services: Postgres, Spring Boot API, Angular SPA.
+# Sensitive defaults (JWT secret, admin password) can be overridden by
+# creating a .env file at the repository root. See .env.example.
+
 services:
   db:
     image: postgres:16-alpine
     container_name: motoshop-db
     environment:
-      POSTGRES_DB: motoshop
-      POSTGRES_USER: motoshop
-      POSTGRES_PASSWORD: motoshop
+      POSTGRES_DB: ${POSTGRES_DB:-motoshop}
+      POSTGRES_USER: ${POSTGRES_USER:-motoshop}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-motoshop}
     ports:
       - "5432:5432"
     volumes:
       - motoshop-db-data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U motoshop"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-motoshop}"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -23,18 +29,36 @@ services:
       db:
         condition: service_healthy
     environment:
-      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/motoshop
-      SPRING_DATASOURCE_USERNAME: motoshop
-      SPRING_DATASOURCE_PASSWORD: motoshop
-      APP_CORS_ALLOWED_ORIGIN: http://localhost:4200
+      # --- Datasource ---
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/${POSTGRES_DB:-motoshop}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-motoshop}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD:-motoshop}
+
+      # --- Security: JWT signing key (HS256 needs at least 32 bytes) ---
+      APP_JWT_SECRET: ${APP_JWT_SECRET:-dev-only-secret-change-me-32bytes-minimum!!}
+      APP_JWT_EXPIRATION_MINUTES: ${APP_JWT_EXPIRATION_MINUTES:-60}
+
+# --- Initial admin seeded at first boot ---
+      APP_ADMIN_EMAIL: ${APP_ADMIN_EMAIL:-[email protected]}
+      APP_ADMIN_PASSWORD: ${APP_ADMIN_PASSWORD:-changeme-admin}
+
+      # --- CORS: storefront + backoffice origins ---
+      APP_CORS_ALLOWED_ORIGINS: ${APP_CORS_ALLOWED_ORIGINS:-http://localhost:4200,http://localhost:4300}
     ports:
       - "8080:8080"
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8080/api/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 10
+      start_period: 30s
 
   frontend:
     build: ./frontend
     container_name: motoshop-frontend
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
     ports:
       - "4200:80"
 

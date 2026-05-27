@@ -20,3 +20,22 @@ frontend/npm-debug.log*
 
 # Docker
 *.log
+
+# Environment overrides (use .env.example as a template)
+.env
+.env.local
+.env.*.local
+
+# OS / editor noise
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.iml
+*.swp
+
+# Build outputs (each module also has its own .gitignore)
+**/target/
+**/dist/
+**/node_modules/
+**/.angular/

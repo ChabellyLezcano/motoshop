@@ -77,4 +77,11 @@ public class GlobalExceptionHandler {
         }
         return ResponseEntity.status(status).body(payload);
     }
+
+    @ExceptionHandler(com.motoshop.api.catalog.MotorcycleNotFoundException.class)
+    public ResponseEntity<Map<String, Object>> handleMotorcycleNotFound(
+            com.motoshop.api.catalog.MotorcycleNotFoundException ex,
+            HttpServletRequest req) {
+        return body(HttpStatus.NOT_FOUND, "Not Found", ex.getMessage(), req, null);
+    }
 }

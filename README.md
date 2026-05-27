@@ -1,63 +1,194 @@
-# MotoShop — Sprint 0
+# MotoShop
 
-Esqueleto contenerizado de extremo a extremo del TFM "Plataforma de comercio electrónico de motocicletas con generación sintética de actividad y observabilidad integral".
+Plataforma de comercio electrónico de motocicletas con generación
+sintética de actividad y observabilidad integral. TFM del Máster en
+Ingeniería Web — UPM.
 
-Este sprint **no implementa funcionalidad de negocio**. Su único objetivo es dejar todas las piezas conectadas, levantables con un solo comando, y con la pipeline de CI funcionando. Sobre este andamiaje se construirán los siguientes sprints.
+> **Estado actual: final del Sprint 1.**
+> Identidad (JWT, roles BUYER/ADMIN), catálogo navegable con CRUD de
+> administración, esquema gobernado por Flyway, Swagger UI integrado,
+> tests unitarios e integración con Postgres real.
 
-## Qué incluye este Sprint 0
+## Tabla de contenidos
 
-- **Backend Spring Boot 3.3** (Java 21) con un endpoint `/api/health`, conexión a PostgreSQL configurada vía JPA, Actuator habilitado y dependencia de Micrometer Prometheus lista para el Sprint 4.
-- **Frontend Angular 18** standalone, con un único componente que consume el endpoint de salud y muestra el resultado.
-- **PostgreSQL 16** como base de datos, con volumen persistente.
-- **Docker Compose** que orquesta los tres servicios.
-- **GitHub Actions** con dos jobs (backend y frontend) que se ejecutan en cada push y pull request.
-- **CORS** preconfigurado para permitir que Angular llame al backend en desarrollo.
+- [Arquitectura](#arquitectura)
+- [Requisitos previos](#requisitos-previos)
+- [Arranque rápido](#arranque-rápido)
+- [Variables de entorno](#variables-de-entorno)
+- [Documentación de la API (Swagger)](#documentación-de-la-api-swagger)
+- [Endpoints principales](#endpoints-principales)
+- [Cuenta de administrador](#cuenta-de-administrador)
+- [Tests](#tests)
+- [Desarrollo local sin Docker](#desarrollo-local-sin-docker)
+- [Estructura del repositorio](#estructura-del-repositorio)
 
-## Requisitos previos en tu máquina
+## Arquitectura
 
-- Docker y Docker Compose v2.
-- (Opcional, solo si quieres ejecutar fuera de Docker) JDK 21, Maven 3.9+, Node.js 20+.
+| Componente   | Tecnología                  | Puerto local |
+|--------------|-----------------------------|--------------|
+| Frontend     | Angular 18                  | 4200         |
+| Backend      | Spring Boot 3.3 (Java 21)   | 8080         |
+| Base de datos| PostgreSQL 16               | 5432         |
 
-## Arranque rápido (todo en Docker)
+La autenticación se hace con tokens JWT (HS256). Las contraseñas se
+almacenan con BCrypt. El esquema de la base lo gestiona **Flyway**;
+Hibernate solo valida que el mapeo cuadra con las tablas reales.
 
-Desde la raíz del proyecto:
+## Requisitos previos
+
+- [Docker](https://www.docker.com/) 24+ y Docker Compose v2.
+- Para desarrollo backend nativo: **Java 21** y **Maven 3.9+**.
+- Para desarrollo frontend nativo: **Node.js 20+**.
+
+## Arranque rápido
 
 ```bash
-docker compose up --build
+# 1. Clonar y entrar al repo
+git clone <repo-url>
+cd motoshop
+
+# 2. (Opcional) Crear un .env personalizado
+cp .env.example .env
+# Edita .env si quieres cambiar el secreto JWT, la contraseña del admin, etc.
+
+# 3. Levantar todo
+docker compose up -d --build
+
+# 4. Esperar a que el backend esté sano (~15s)
+docker compose ps
+
+# 5. Comprobar
+curl http://localhost:8080/api/health
 ```
 
-La primera vez tardará varios minutos porque construye las imágenes (Maven descarga dependencias, npm instala paquetes). Cuando termine, abre:
+Una vez los tres servicios estén `healthy`:
 
-- Frontend: <http://localhost:4200>
-- Backend (salud directa): <http://localhost:8080/api/health>
-- Backend (Actuator): <http://localhost:8080/actuator/health>
+- **API**: <http://localhost:8080>
+- **Swagger UI**: <http://localhost:8080/swagger-ui.html>
+- **Tienda (Angular)**: <http://localhost:4200>
 
-Si todo está bien, el frontend mostrará un recuadro verde con el estado del backend.
-
-Para detenerlo: `Ctrl+C` y luego `docker compose down` (añade `-v` si quieres borrar también el volumen de PostgreSQL).
-
-## Arranque en local sin Docker (desarrollo)
-
-Útil cuando estás iterando en código y no quieres reconstruir imágenes a cada cambio.
-
-**1) Levanta solo PostgreSQL en Docker:**
+Para parar:
 
 ```bash
-docker compose up db
+docker compose down            # mantiene los datos
+docker compose down -v         # borra también el volumen de Postgres
 ```
 
-**2) Backend:**
+## Variables de entorno
+
+Todas tienen valores por defecto seguros para desarrollo. En producción
+hay que sobreescribir, como mínimo, `APP_JWT_SECRET` y
+`APP_ADMIN_PASSWORD`.
+
+| Variable                       | Default                          | Descripción                                            |
+|--------------------------------|----------------------------------|--------------------------------------------------------|
+| `POSTGRES_DB`                  | `motoshop`                       | Nombre de la base de datos                             |
+| `POSTGRES_USER`                | `motoshop`                       | Usuario de Postgres                                    |
+| `POSTGRES_PASSWORD`            | `motoshop`                       | Contraseña de Postgres                                 |
+| `APP_JWT_SECRET`               | `dev-only-secret-change-me-...`  | Clave HMAC del JWT. **Mínimo 32 bytes.**               |
+| `APP_JWT_EXPIRATION_MINUTES`   | `60`                             | Duración del token de acceso                           |
+| `APP_ADMIN_EMAIL`              | `[email protected]`             | Email del administrador inicial                        |
+| `APP_ADMIN_PASSWORD`           | `changeme-admin`                 | Contraseña del administrador inicial                   |
+| `APP_CORS_ALLOWED_ORIGINS`     | `http://localhost:4200,...:4300` | Orígenes admitidos, separados por comas                |
+
+Para generar un secreto JWT robusto:
+
+```bash
+openssl rand -base64 48
+```
+
+## Documentación de la API (Swagger)
+
+La API se documenta automáticamente con OpenAPI 3.
+
+- UI interactiva: <http://localhost:8080/swagger-ui.html>
+- Contrato JSON: <http://localhost:8080/v3/api-docs>
+
+Para autenticarte en Swagger UI:
+
+1. Ejecuta `POST /api/auth/login` con `[email protected]` /
+   `changeme-admin` y copia el `token` de la respuesta.
+2. Pulsa el botón **Authorize** arriba a la derecha.
+3. Pega `Bearer <token>` y confirma.
+4. A partir de ahí, cualquier endpoint protegido se ejecuta con el
+   token automáticamente.
+
+El contrato OpenAPI también puede importarse en Insomnia o Postman
+desde la URL `/v3/api-docs`.
+
+## Endpoints principales
+
+### Públicos (sin autenticación)
+
+| Método | Ruta                          | Descripción                                  |
+|--------|-------------------------------|----------------------------------------------|
+| GET    | `/api/health`                 | Health check                                 |
+| POST   | `/api/auth/register`          | Registro (siempre crea rol BUYER)            |
+| POST   | `/api/auth/login`             | Login con email/contraseña                   |
+| GET    | `/api/motorcycles`            | Listado paginado con filtros opcionales      |
+| GET    | `/api/motorcycles/{id}`       | Ficha de una motocicleta                     |
+
+### Autenticados
+
+| Método | Ruta                          | Rol requerido | Descripción                          |
+|--------|-------------------------------|---------------|--------------------------------------|
+| GET    | `/api/auth/me`                | cualquier rol | Datos del usuario actual             |
+| POST   | `/api/motorcycles`            | ADMIN         | Crear una motocicleta                |
+| PUT    | `/api/motorcycles/{id}`       | ADMIN         | Actualizar (parcial) una motocicleta |
+| DELETE | `/api/motorcycles/{id}`       | ADMIN         | Borrar una motocicleta               |
+
+Filtros disponibles en `GET /api/motorcycles`:
+`?q=...&brand=...&category=NAKED&license=A2&minPriceCents=...&maxPriceCents=...&inStock=true&page=0&size=20&sort=priceCents,asc`
+
+## Cuenta de administrador
+
+Al arrancar por primera vez, el backend siembra un único usuario
+administrador a partir de `APP_ADMIN_EMAIL` y `APP_ADMIN_PASSWORD`. Si
+ese usuario ya existe en la base, **no se modifica**: el seeder es
+idempotente, no resetea la contraseña en cada arranque.
+
+El registro público (`POST /api/auth/register`) crea siempre usuarios
+con rol BUYER, ignorando cualquier intento del cliente de inyectar
+`role`. La promoción a ADMIN llegará en el Sprint 2 mediante un
+endpoint protegido del back-office.
+
+## Tests
 
 ```bash
 cd backend
-mvn spring-boot:run
+
+# Solo tests unitarios (rápidos, ~10-20s, no requieren Docker)
+mvn test
+
+# Toda la suite, incluida integración con Postgres real via Testcontainers
+mvn verify
 ```
 
-**3) Frontend (en otra terminal):**
+Los tests unitarios usan el perfil `test` con H2 en memoria. Los de
+integración (`*IT.java`) usan el perfil `integration-test` y arrancan
+un contenedor Postgres efímero con Testcontainers, ejecutan las
+migraciones reales de Flyway y validan el flujo extremo a extremo.
+
+## Desarrollo local sin Docker
+
+Útil cuando se itera sobre el backend o el frontend y se quiere
+recargar más rápido.
+
+**Solo Postgres en Docker, backend y frontend nativos:**
 
 ```bash
+# Postgres aislado
+docker compose up -d db
+
+# Backend con perfil de desarrollo
+cd backend
+mvn spring-boot:run
+# Variables de entorno respetadas; los defaults de application.yml apuntan
+# a localhost:5432, que es lo que expone el Postgres del compose.
+
+# Frontend (en otra terminal)
 cd frontend
-npm install        # solo la primera vez
+npm install
 npm start
 ```
 
@@ -65,68 +196,20 @@ npm start
 
 ```
 motoshop/
-├── backend/                 # Spring Boot
+├── backend/                    # API Spring Boot
 │   ├── src/main/java/com/motoshop/api/
-│   │   ├── MotoshopApiApplication.java
-│   │   └── health/
-│   │       ├── HealthController.java
-│   │       └── CorsConfig.java
-│   ├── src/main/resources/application.yml
-│   ├── src/test/java/...    # test trivial para CI
-│   ├── pom.xml
-│   └── Dockerfile
-├── frontend/                # Angular
-│   ├── src/
-│   │   ├── app/app.component.ts
-│   │   ├── environments/environment.ts
-│   │   ├── index.html
-│   │   ├── main.ts
-│   │   └── styles.css
-│   ├── package.json
-│   ├── angular.json
-│   ├── tsconfig.json
-│   ├── nginx.conf
-│   └── Dockerfile
-├── .github/workflows/ci.yml # Pipeline de CI
+│   │   ├── auth/               # Registro, login, /me
+│   │   ├── bootstrap/          # Siembra del admin inicial
+│   │   ├── catalog/            # Motocicletas (entidad, repo, servicio, DTOs)
+│   │   ├── security/           # JWT, filtro, configuración de Spring Security
+│   │   ├── user/               # Entidad User y repositorio
+│   │   └── web/                # OpenAPI, manejo global de errores
+│   └── src/main/resources/
+│       ├── application.yml
+│       └── db/migration/       # Migraciones Flyway (V1, V2)
+├── frontend/                   # Aplicación Angular
+├── .github/workflows/          # Pipelines de GitHub Actions
 ├── docker-compose.yml
-├── .gitignore
+├── .env.example
 └── README.md
 ```
-
-## Variables de entorno relevantes
-
-El backend lee la configuración de BD y CORS de variables de entorno, con valores por defecto pensados para Docker Compose:
-
-| Variable | Por defecto | Descripción |
-|---|---|---|
-| `SPRING_DATASOURCE_URL` | `jdbc:postgresql://localhost:5432/motoshop` | URL de la BD. En Compose se sobrescribe a `jdbc:postgresql://db:5432/motoshop`. |
-| `SPRING_DATASOURCE_USERNAME` | `motoshop` | Usuario de BD. |
-| `SPRING_DATASOURCE_PASSWORD` | `motoshop` | Contraseña de BD. |
-| `APP_CORS_ALLOWED_ORIGIN` | `http://localhost:4200` | Origen permitido para CORS. |
-
-## Comprobaciones manuales
-
-Antes de dar el Sprint 0 por cerrado, verifica:
-
-- [ ] `docker compose up --build` arranca los tres servicios sin errores.
-- [ ] `curl http://localhost:8080/api/health` devuelve JSON con `status: UP`.
-- [ ] El frontend en `http://localhost:4200` muestra el recuadro verde.
-- [ ] `docker compose down` detiene todo limpiamente.
-- [ ] Al subir un commit, la pipeline de GitHub Actions se ejecuta y sus dos jobs (backend y frontend) terminan en verde.
-
-## Notas sobre decisiones de diseño
-
-**CORS y puertos.** En este sprint el navegador del usuario llama directamente al backend en `localhost:8080` desde el frontend servido en `localhost:4200`. Se gestiona con CORS abierto al puerto 4200. En sprints posteriores se puede introducir un proxy inverso si conviene unificar puertos.
-
-**Endpoint propio vs Actuator.** Se expone tanto `/api/health` propio como `/actuator/health` de Spring. El primero sirve como contrato de la aplicación; el segundo, como punto de comprobación operativa.
-
-**`ddl-auto: update`.** Pensado para desarrollo: Hibernate ajusta el esquema automáticamente. En sprints posteriores conviene migrar a Flyway o Liquibase para versionar el esquema.
-
-**Sin Maven Wrapper.** El `pom.xml` no incluye `mvnw` para mantener el zip ligero; tanto la pipeline de CI como el Dockerfile usan Maven directamente. Si lo prefieres en local, puedes generarlo con `mvn -N io.takari:maven:wrapper`.
-
-## Próximos pasos (Sprint 1)
-
-- Spring Security + JWT con BCrypt y roles `COMPRADOR` / `ADMIN`.
-- Registro público (solo crea compradores) y siembra del administrador inicial al arrancar.
-- Entidad `Motorcycle` y CRUD básico en el backend.
-- Pantallas de login y listado de catálogo en Angular.
