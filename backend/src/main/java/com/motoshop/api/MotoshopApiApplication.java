@@ -8,7 +8,7 @@ import org.springframework.boot.context.properties.ConfigurationPropertiesScan;
 @ConfigurationPropertiesScan
 public class MotoshopApiApplication {
 
-    public static void main(String[] args) {
-        SpringApplication.run(MotoshopApiApplication.class, args);
-    }
+  public static void main(String[] args) {
+    SpringApplication.run(MotoshopApiApplication.class, args);
+  }
 }

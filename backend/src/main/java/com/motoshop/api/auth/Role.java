@@ -5,10 +5,8 @@
 
 package com.motoshop.api.auth;
 
-
 class Role {
 
-    public static final Object BUYER = null;
-    public static Object ADMIN;
-
+  public static final Object BUYER = null;
+  public static Object ADMIN;
 }
