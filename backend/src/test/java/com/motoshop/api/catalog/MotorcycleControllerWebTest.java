@@ -33,10 +33,14 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.motoshop.api.catalog.dto.CreateMotorcycleRequest;
 import com.motoshop.api.catalog.dto.MotorcycleResponse;
+import com.motoshop.api.catalog.exception.MotorcycleNotFoundException;
+import com.motoshop.api.catalog.model.Category;
+import com.motoshop.api.catalog.model.Cooling;
+import com.motoshop.api.catalog.model.EngineType;
+import com.motoshop.api.catalog.model.LicenseType;
 import com.motoshop.api.security.SecurityConfig;
 import com.motoshop.api.security.jwt.JwtAuthenticationFilter;
 import com.motoshop.api.security.jwt.JwtService;
-import com.motoshop.api.web.GlobalExceptionHandler;
 
 @WebMvcTest(controllers = MotorcycleController.class)
 @Import({ SecurityConfig.class, GlobalExceptionHandler.class,

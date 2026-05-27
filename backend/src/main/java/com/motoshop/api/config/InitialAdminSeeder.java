@@ -1,4 +1,4 @@
-package com.motoshop.api.bootstrap;
+package com.motoshop.api.config;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -8,7 +8,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.motoshop.api.security.Role;
+import com.motoshop.api.user.Role;
 import com.motoshop.api.user.User;
 import com.motoshop.api.user.UserRepository;
 

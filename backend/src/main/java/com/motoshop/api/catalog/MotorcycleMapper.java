@@ -3,17 +3,20 @@ package com.motoshop.api.catalog;
 import com.motoshop.api.catalog.dto.CreateMotorcycleRequest;
 import com.motoshop.api.catalog.dto.MotorcycleResponse;
 import com.motoshop.api.catalog.dto.UpdateMotorcycleRequest;
+import com.motoshop.api.catalog.model.Motorcycle;
 
 /**
  * Stateless conversions between {@link Motorcycle} entities and their
  * DTOs. Kept as a plain utility class to avoid an unnecessary Spring
  * bean — there is no state and no dependency to inject.
  */
-final class MotorcycleMapper {
+// 1. CAMBIAMOS A PUBLIC
+public final class MotorcycleMapper {
 
     private MotorcycleMapper() { }
 
-    static MotorcycleResponse toResponse(Motorcycle m) {
+    // 2. AÑADIMOS PUBLIC AQUÍ (Este es el que soluciona tu error en el Service)
+    public static MotorcycleResponse toResponse(Motorcycle m) {
         return new MotorcycleResponse(
                 m.getId(), m.getBrand(), m.getModel(),
                 m.getDisplacement(), m.getYear(),
@@ -29,7 +32,8 @@ final class MotorcycleMapper {
         );
     }
 
-    static Motorcycle fromCreate(CreateMotorcycleRequest req) {
+    // 3. AÑADIMOS PUBLIC POR BUENA PRÁCTICA
+    public static Motorcycle fromCreate(CreateMotorcycleRequest req) {
         Motorcycle m = new Motorcycle();
         m.setBrand(req.brand());
         m.setModel(req.model());
@@ -55,13 +59,8 @@ final class MotorcycleMapper {
         return m;
     }
 
-    /**
-     * Applies the non-null fields of the request onto the existing
-     * entity. The "if not null" pattern is the canonical way to express
-     * PATCH semantics with Bean Validation: validators ran for the
-     * fields that were supplied; the rest are ignored.
-     */
-    static void applyUpdate(Motorcycle m, UpdateMotorcycleRequest req) {
+    // 4. AÑADIMOS PUBLIC AQUÍ TAMBIÉN
+    public static void applyUpdate(Motorcycle m, UpdateMotorcycleRequest req) {
         if (req.brand() != null)            m.setBrand(req.brand());
         if (req.model() != null)            m.setModel(req.model());
         if (req.displacement() != null)     m.setDisplacement(req.displacement());

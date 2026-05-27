@@ -1,6 +1,6 @@
 package com.motoshop.api.auth.dto;
 
-import com.motoshop.api.security.Role;
+import com.motoshop.api.user.Role;
 
 /**
  * Response payload for successful login and registration.

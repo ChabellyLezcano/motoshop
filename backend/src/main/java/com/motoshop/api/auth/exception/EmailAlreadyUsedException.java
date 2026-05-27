@@ -1,4 +1,4 @@
-package com.motoshop.api.auth;
+package com.motoshop.api.auth.exception;
 
 /**
  * Thrown when a registration attempt collides with an existing email.

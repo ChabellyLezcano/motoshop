@@ -3,10 +3,7 @@ package com.motoshop.api.catalog.dto;
 import java.math.BigDecimal;
 import java.time.Instant;
 
-import com.motoshop.api.catalog.Category;
-import com.motoshop.api.catalog.Cooling;
-import com.motoshop.api.catalog.EngineType;
-import com.motoshop.api.catalog.LicenseType;
+import com.motoshop.api.catalog.model.*;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 

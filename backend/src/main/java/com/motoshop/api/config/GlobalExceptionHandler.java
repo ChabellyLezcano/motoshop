@@ -1,4 +1,4 @@
-package com.motoshop.api.web;
+package com.motoshop.api.config;
 
 import java.time.Instant;
 import java.util.HashMap;
@@ -13,7 +13,8 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-import com.motoshop.api.auth.EmailAlreadyUsedException;
+import com.motoshop.api.auth.exception.EmailAlreadyUsedException;
+import com.motoshop.api.catalog.exception.MotorcycleNotFoundException; // <-- NUEVO IMPORT CORREGIDO
 
 import jakarta.servlet.http.HttpServletRequest;
 
@@ -61,6 +62,14 @@ public class GlobalExceptionHandler {
         return body(HttpStatus.BAD_REQUEST, "Bad Request", ex.getMessage(), req, null);
     }
 
+    // <-- MANEJADOR DE EXCEPCIÓN DE MOTO CORREGIDO Y LIMPIO
+    @ExceptionHandler(MotorcycleNotFoundException.class)
+    public ResponseEntity<Map<String, Object>> handleMotorcycleNotFound(
+            MotorcycleNotFoundException ex,
+            HttpServletRequest req) {
+        return body(HttpStatus.NOT_FOUND, "Not Found", ex.getMessage(), req, null);
+    }
+
     private ResponseEntity<Map<String, Object>> body(HttpStatus status,
                                                      String error,
                                                      String message,
@@ -76,12 +85,5 @@ public class GlobalExceptionHandler {
             payload.put("fieldErrors", fieldErrors);
         }
         return ResponseEntity.status(status).body(payload);
-    }
-
-    @ExceptionHandler(com.motoshop.api.catalog.MotorcycleNotFoundException.class)
-    public ResponseEntity<Map<String, Object>> handleMotorcycleNotFound(
-            com.motoshop.api.catalog.MotorcycleNotFoundException ex,
-            HttpServletRequest req) {
-        return body(HttpStatus.NOT_FOUND, "Not Found", ex.getMessage(), req, null);
     }
 }

@@ -1,19 +1,21 @@
 package com.motoshop.api.auth;
 
-import com.motoshop.api.auth.dto.AuthResponse;
-import com.motoshop.api.auth.dto.LoginRequest;
-import com.motoshop.api.auth.dto.RegisterRequest;
-import com.motoshop.api.security.AppUserDetails;
-import com.motoshop.api.security.Role;
-import com.motoshop.api.security.jwt.JwtService;
-import com.motoshop.api.user.User;
-import com.motoshop.api.user.UserRepository;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import com.motoshop.api.auth.dto.AuthResponse;
+import com.motoshop.api.auth.dto.LoginRequest;
+import com.motoshop.api.auth.dto.RegisterRequest;
+import com.motoshop.api.auth.exception.EmailAlreadyUsedException;
+import com.motoshop.api.security.AppUserDetails;
+import com.motoshop.api.security.jwt.JwtService;
+import com.motoshop.api.user.Role;
+import com.motoshop.api.user.User;
+import com.motoshop.api.user.UserRepository;
 
 @Service
 public class AuthService {

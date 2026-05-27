@@ -1,4 +1,4 @@
-package com.motoshop.api.catalog;
+package com.motoshop.api.catalog.exception;
 
 /**
  * Thrown when a motorcycle id is not present in the catalog.

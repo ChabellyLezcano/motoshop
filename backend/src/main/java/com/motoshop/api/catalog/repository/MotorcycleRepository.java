@@ -1,7 +1,12 @@
-package com.motoshop.api.catalog;
+package com.motoshop.api.catalog.repository;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
+
+import com.motoshop.api.catalog.model.Motorcycle;
 
 /**
  * Repository for the catalog. Combines:
@@ -11,4 +16,6 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
  */
 public interface MotorcycleRepository
         extends JpaRepository<Motorcycle, Long>, JpaSpecificationExecutor<Motorcycle> {
+
+    Page<Motorcycle> findAll(Specification<Motorcycle> spec, Pageable pageable);
 }

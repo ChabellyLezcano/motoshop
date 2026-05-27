@@ -1,4 +1,4 @@
-package com.motoshop.api.security;
+package com.motoshop.api.user;
 
 /**
  * Roles de la aplicacion. La asignacion del rol es responsabilidad

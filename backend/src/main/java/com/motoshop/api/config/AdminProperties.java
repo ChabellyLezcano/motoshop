@@ -1,4 +1,4 @@
-package com.motoshop.api.bootstrap;
+package com.motoshop.api.config;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 

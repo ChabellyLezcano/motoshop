@@ -2,8 +2,6 @@ package com.motoshop.api.user;
 
 import java.time.Instant;
 
-import com.motoshop.api.security.Role;
-
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -41,11 +39,11 @@ public class User {
     protected User() {
     }
 
-    public User(String email, String passwordHash, String fullName, Role role) {
+    public User(String email, String passwordHash, String fullName, Role buyer) {
         this.email = email;
         this.password = passwordHash;
         this.fullName = fullName;
-        this.role = role;
+        this.role = buyer;
     }
 
     @PrePersist

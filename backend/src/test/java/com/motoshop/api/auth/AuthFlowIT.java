@@ -18,7 +18,6 @@ import org.springframework.http.ResponseEntity;
 import com.motoshop.api.auth.dto.AuthResponse;
 import com.motoshop.api.auth.dto.LoginRequest;
 import com.motoshop.api.auth.dto.RegisterRequest;
-import com.motoshop.api.security.Role;
 import com.motoshop.api.support.PostgresIntegrationTest;
 
 /**

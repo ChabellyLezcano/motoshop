@@ -1,4 +1,4 @@
-package com.motoshop.api.web;
+package com.motoshop.api.config;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

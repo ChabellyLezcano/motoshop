@@ -22,6 +22,8 @@ import com.motoshop.api.catalog.MotorcycleService.MotorcycleFilter;
 import com.motoshop.api.catalog.dto.CreateMotorcycleRequest;
 import com.motoshop.api.catalog.dto.MotorcycleResponse;
 import com.motoshop.api.catalog.dto.UpdateMotorcycleRequest;
+import com.motoshop.api.catalog.model.Category;
+import com.motoshop.api.catalog.model.LicenseType;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;

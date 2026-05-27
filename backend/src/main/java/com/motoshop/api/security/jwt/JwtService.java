@@ -9,7 +9,7 @@ import javax.crypto.SecretKey;
 
 import org.springframework.stereotype.Service;
 
-import com.motoshop.api.security.Role;
+import com.motoshop.api.user.Role;
 
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;

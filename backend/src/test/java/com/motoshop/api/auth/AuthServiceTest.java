@@ -22,8 +22,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 
 import com.motoshop.api.auth.dto.LoginRequest;
 import com.motoshop.api.auth.dto.RegisterRequest;
+import com.motoshop.api.auth.exception.EmailAlreadyUsedException;
 import com.motoshop.api.security.AppUserDetails;
-import com.motoshop.api.security.Role;
 import com.motoshop.api.security.jwt.JwtProperties;
 import com.motoshop.api.security.jwt.JwtService;
 import com.motoshop.api.user.User;

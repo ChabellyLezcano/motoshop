@@ -7,13 +7,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -24,12 +21,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.motoshop.api.auth.dto.AuthResponse;
 import com.motoshop.api.auth.dto.LoginRequest;
 import com.motoshop.api.auth.dto.RegisterRequest;
-import com.motoshop.api.security.Role;
+import com.motoshop.api.auth.exception.EmailAlreadyUsedException;
+import com.motoshop.api.config.GlobalExceptionHandler;
 import com.motoshop.api.security.SecurityConfig;
 import com.motoshop.api.security.jwt.JwtAuthenticationFilter;
 import com.motoshop.api.security.jwt.JwtService;
+import com.motoshop.api.user.Role;
 import com.motoshop.api.user.UserRepository;
-import com.motoshop.api.web.GlobalExceptionHandler;
 
 @WebMvcTest(controllers = AuthController.class)
 @Import({ SecurityConfig.class, GlobalExceptionHandler.class,
@@ -118,7 +116,5 @@ class AuthControllerWebTest {
      */
     @TestConfiguration
     static class WebTestConfig {
-        @Bean
-        PasswordEncoder passwordEncoder() { return new BCryptPasswordEncoder(); }
     }
 }

@@ -9,6 +9,12 @@ import org.springframework.transaction.annotation.Transactional;
 import com.motoshop.api.catalog.dto.CreateMotorcycleRequest;
 import com.motoshop.api.catalog.dto.MotorcycleResponse;
 import com.motoshop.api.catalog.dto.UpdateMotorcycleRequest;
+import com.motoshop.api.catalog.exception.MotorcycleNotFoundException;
+import com.motoshop.api.catalog.model.Category;
+import com.motoshop.api.catalog.model.LicenseType;
+import com.motoshop.api.catalog.model.Motorcycle;
+import com.motoshop.api.catalog.repository.MotorcycleRepository;
+import com.motoshop.api.catalog.repository.MotorcycleSpecifications;
 
 @Service
 public class MotorcycleService {

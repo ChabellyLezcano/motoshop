@@ -13,7 +13,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 import org.springframework.web.filter.OncePerRequestFilter;
 
-import com.motoshop.api.security.Role;
+import com.motoshop.api.user.Role;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;

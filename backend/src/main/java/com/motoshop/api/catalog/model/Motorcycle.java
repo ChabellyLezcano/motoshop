@@ -1,4 +1,4 @@
-package com.motoshop.api.catalog;
+package com.motoshop.api.catalog.model;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -108,7 +108,7 @@ public class Motorcycle {
     @Column(name = "updated_at", nullable = false)
     private Instant updatedAt;
 
-    protected Motorcycle() {
+    public Motorcycle() {
         // required by JPA
     }
 
