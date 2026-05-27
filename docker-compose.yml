@@ -1,0 +1,42 @@
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: motoshop-db
+    environment:
+      POSTGRES_DB: motoshop
+      POSTGRES_USER: motoshop
+      POSTGRES_PASSWORD: motoshop
+    ports:
+      - "5432:5432"
+    volumes:
+      - motoshop-db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U motoshop"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build: ./backend
+    container_name: motoshop-backend
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/motoshop
+      SPRING_DATASOURCE_USERNAME: motoshop
+      SPRING_DATASOURCE_PASSWORD: motoshop
+      APP_CORS_ALLOWED_ORIGIN: http://localhost:4200
+    ports:
+      - "8080:8080"
+
+  frontend:
+    build: ./frontend
+    container_name: motoshop-frontend
+    depends_on:
+      - backend
+    ports:
+      - "4200:80"
+
+volumes:
+  motoshop-db-data:
