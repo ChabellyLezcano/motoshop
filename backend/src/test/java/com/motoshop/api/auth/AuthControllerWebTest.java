@@ -1,7 +1,19 @@
 package com.motoshop.api.auth;
 
+import org.junit.jupiter.api.Test;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
+import org.springframework.boot.test.context.TestConfiguration;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.context.annotation.Import;
+import org.springframework.http.MediaType;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.web.servlet.MockMvc;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -13,21 +25,9 @@ import com.motoshop.api.auth.dto.RegisterRequest;
 import com.motoshop.api.auth.exception.EmailAlreadyUsedException;
 import com.motoshop.api.config.GlobalExceptionHandler;
 import com.motoshop.api.security.SecurityConfig;
-import com.motoshop.api.security.jwt.JwtAuthenticationFilter;
 import com.motoshop.api.security.jwt.JwtService;
 import com.motoshop.api.user.Role;
 import com.motoshop.api.user.UserRepository;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.context.TestConfiguration;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.context.annotation.Import;
-import org.springframework.http.MediaType;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.BadCredentialsException;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.web.servlet.MockMvc;
 
 @WebMvcTest(controllers = AuthController.class)
 @Import({
@@ -41,19 +41,20 @@ class AuthControllerWebTest {
   @Autowired MockMvc mvc;
   @Autowired ObjectMapper json;
 
-  // The controller depends on AuthService and UserRepository through Spring.
-  // We mock them at the boundary of this slice.
   @MockBean AuthService authService;
   @MockBean UserRepository userRepository;
-  // Security config has its own dependencies; we mock the ones not relevant here.
   @MockBean JwtService jwtService;
-  @MockBean JwtAuthenticationFilter jwtAuthenticationFilter;
   @MockBean AuthenticationManager authenticationManager;
+  @MockBean UserDetailsService userDetailsService;
+  
+  // Mocks de seguridad para el contexto de filtro
+  @MockBean com.motoshop.api.security.RestAuthenticationEntryPoint restAuthenticationEntryPoint;
+  @MockBean com.motoshop.api.security.RestAccessDeniedHandler restAccessDeniedHandler;
 
   @Test
   void registerReturns201AndBody() throws Exception {
-    var req = new RegisterRequest("[email protected]", "secret123", "Alice");
-    var resp = new AuthResponse("tok", 3600, 1L, "[email protected]", "Alice", Role.BUYER);
+    var req = new RegisterRequest("alice@example.com", "secret123", "Alice");
+    var resp = new AuthResponse("tok", 3600, 1L, "alice@example.com", "Alice", Role.BUYER);
     when(authService.register(any())).thenReturn(resp);
 
     mvc.perform(
@@ -80,7 +81,7 @@ class AuthControllerWebTest {
 
   @Test
   void registerWithShortPasswordReturns400() throws Exception {
-    var bad = new RegisterRequest("[email protected]", "short", "Alice");
+    var bad = new RegisterRequest("bob@example.com", "short", "Alice");
 
     mvc.perform(
             post("/api/auth/register")
@@ -92,8 +93,8 @@ class AuthControllerWebTest {
 
   @Test
   void duplicateEmailReturns409() throws Exception {
-    var req = new RegisterRequest("[email protected]", "secret123", "Alice");
-    when(authService.register(any())).thenThrow(new EmailAlreadyUsedException("[email protected]"));
+    var req = new RegisterRequest("duplicate@example.com", "secret123", "Alice");
+    when(authService.register(any())).thenThrow(new EmailAlreadyUsedException("duplicate@example.com"));
 
     mvc.perform(
             post("/api/auth/register")
@@ -105,7 +106,7 @@ class AuthControllerWebTest {
 
   @Test
   void loginWithWrongPasswordReturns401WithGenericMessage() throws Exception {
-    var req = new LoginRequest("[email protected]", "wrong");
+    var req = new LoginRequest("user@example.com", "wrong");
     when(authService.login(any())).thenThrow(new BadCredentialsException("nope"));
 
     mvc.perform(
@@ -113,14 +114,9 @@ class AuthControllerWebTest {
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(json.writeValueAsString(req)))
         .andExpect(status().isUnauthorized())
-        // Critical: the body MUST NOT reveal whether the email exists.
         .andExpect(jsonPath("$.message").value("Invalid email or password"));
   }
 
-  /**
-   * SecurityConfig declares a PasswordEncoder bean elsewhere in the production graph; in this slice
-   * we supply a real one so the filter chain assembles without extra mocks.
-   */
   @TestConfiguration
   static class WebTestConfig {}
 }

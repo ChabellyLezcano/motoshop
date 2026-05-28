@@ -1,5 +1,8 @@
 package com.motoshop.api.catalog.model;
 
+import java.math.BigDecimal;
+import java.time.Instant;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -10,8 +13,6 @@ import jakarta.persistence.Id;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
-import java.math.BigDecimal;
-import java.time.Instant;
 
 @Entity
 @Table(name = "motorcycles")
@@ -30,8 +31,8 @@ public class Motorcycle {
   @Column(nullable = false)
   private Integer displacement;
 
-  @Column(nullable = false)
-  private Integer year;
+@Column(name = "`year`", nullable = false)
+private Integer year;
 
   /** Price in cents to avoid floating-point arithmetic on money. */
   @Column(name = "price_cents", nullable = false)

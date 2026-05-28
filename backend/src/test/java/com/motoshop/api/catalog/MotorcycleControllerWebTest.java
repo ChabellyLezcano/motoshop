@@ -1,7 +1,21 @@
 package com.motoshop.api.catalog;
 
+import java.math.BigDecimal;
+import java.time.Instant;
+import java.util.List;
+
+import org.junit.jupiter.api.Test;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.http.MediaType;
+import org.springframework.security.test.context.support.WithAnonymousUser;
+import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.web.servlet.MockMvc;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -17,37 +31,9 @@ import com.motoshop.api.catalog.model.Category;
 import com.motoshop.api.catalog.model.Cooling;
 import com.motoshop.api.catalog.model.EngineType;
 import com.motoshop.api.catalog.model.LicenseType;
-import com.motoshop.api.config.GlobalExceptionHandler;
-import com.motoshop.api.security.SecurityConfig;
-import com.motoshop.api.security.jwt.JwtAuthenticationFilter;
-import com.motoshop.api.security.jwt.JwtService;
-import java.math.BigDecimal;
-import java.time.Instant;
-import java.util.List;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
-import org.springframework.boot.test.context.TestConfiguration;
-import org.springframework.boot.test.mock.mockito.MockBean;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Import;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
-import org.springframework.http.MediaType;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.test.context.support.WithAnonymousUser;
-import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.web.servlet.MockMvc;
 
-@WebMvcTest(controllers = MotorcycleController.class)
-@Import({
-  SecurityConfig.class,
-  GlobalExceptionHandler.class,
-  MotorcycleControllerWebTest.WebTestConfig.class
-})
+@SpringBootTest
+@AutoConfigureMockMvc
 @ActiveProfiles("test")
 class MotorcycleControllerWebTest {
 
@@ -55,16 +41,13 @@ class MotorcycleControllerWebTest {
   @Autowired ObjectMapper json;
 
   @MockBean MotorcycleService service;
-  @MockBean JwtService jwtService;
-  @MockBean JwtAuthenticationFilter jwtAuthenticationFilter;
-  @MockBean AuthenticationManager authenticationManager;
 
   // -------- public read access --------
 
   @Test
   @WithAnonymousUser
   void anonymousCanListCatalog() throws Exception {
-    Page<MotorcycleResponse> page = new PageImpl<>(List.of(sampleResponse()));
+    var page = new org.springframework.data.domain.PageImpl<>(List.of(sampleResponse()));
     when(service.list(any(), any())).thenReturn(page);
 
     mvc.perform(get("/api/motorcycles"))
@@ -194,13 +177,5 @@ class MotorcycleControllerWebTest {
         6,
         true,
         true);
-  }
-
-  @TestConfiguration
-  static class WebTestConfig {
-    @Bean
-    PasswordEncoder passwordEncoder() {
-      return new BCryptPasswordEncoder();
-    }
   }
 }
