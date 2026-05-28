@@ -38,7 +38,6 @@ class MotorcycleCatalogIT extends PostgresIntegrationTest {
     assertThat(resp.getStatusCode()).isEqualTo(HttpStatus.OK);
 
     JsonNode body = json.readTree(resp.getBody());
-    // V2 seeds 30 motorcycles; we assert >=20 to keep room for future tweaks.
     assertThat(body.get("totalElements").asInt()).isGreaterThanOrEqualTo(20);
   }
 
@@ -93,7 +92,6 @@ class MotorcycleCatalogIT extends PostgresIntegrationTest {
     assertThat(created.getStatusCode()).isEqualTo(HttpStatus.CREATED);
     Long newId = json.readTree(created.getBody()).get("id").asLong();
 
-    // Read it back, anonymously.
     var fetched = http.getForEntity("/api/motorcycles/" + newId, String.class);
     assertThat(fetched.getStatusCode()).isEqualTo(HttpStatus.OK);
     assertThat(json.readTree(fetched.getBody()).get("model").asText()).isEqualTo("QA-Special");
@@ -104,7 +102,6 @@ class MotorcycleCatalogIT extends PostgresIntegrationTest {
   void invalidCreateReturns400() throws Exception {
     String adminToken = loginAsAdmin();
 
-    // Missing required fields; just brand + model.
     String invalid = """
                 { "brand": "X", "model": "Y" }
                 """;
@@ -120,16 +117,9 @@ class MotorcycleCatalogIT extends PostgresIntegrationTest {
     assertThat(json.readTree(resp.getBody()).get("fieldErrors")).isNotNull();
   }
 
-  private String loginAsAdmin() throws Exception {
+  private String loginAsAdmin() {
     LoginRequest loginReq = new LoginRequest("[email protected]", "it-admin-pw");
-    HttpHeaders headers = new HttpHeaders();
-    headers.setContentType(MediaType.APPLICATION_JSON);
-    
-    var resp =
-        http.postForEntity(
-            "/api/auth/login",
-            new HttpEntity<>(json.writeValueAsString(loginReq), headers),
-            AuthResponse.class);
+    var resp = http.postForEntity("/api/auth/login", loginReq, AuthResponse.class);
     assertThat(resp.getStatusCode()).isEqualTo(HttpStatus.OK);
     return resp.getBody().token();
   }
