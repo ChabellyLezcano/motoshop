@@ -36,14 +36,12 @@ class AuthFlowIT extends PostgresIntegrationTest {
   void buyerHappyPathAndAuthorisationBoundary() throws Exception {
     // ---- register ----
     RegisterRequest registerReq = new RegisterRequest("[email protected]", "buyerpass1", "Ivan Buyer");
-    HttpHeaders headers = new HttpHeaders();
-    headers.setContentType(MediaType.APPLICATION_JSON);
     
-    ResponseEntity<AuthResponse> registered =
-        http.postForEntity(
-            "/api/auth/register",
-            new HttpEntity<>(json.writeValueAsString(registerReq), headers),
-            AuthResponse.class);
+    ResponseEntity<AuthResponse> registered = http.exchange(
+        "/api/auth/register",
+        HttpMethod.POST,
+        new HttpEntity<>(json.writeValueAsString(registerReq), jsonHeaders()),
+        AuthResponse.class);
 
     assertThat(registered.getStatusCode()).isEqualTo(HttpStatus.CREATED);
     assertThat(registered.getBody()).isNotNull();
@@ -71,14 +69,12 @@ class AuthFlowIT extends PostgresIntegrationTest {
   @DisplayName("Seeded admin can log in and reach admin-only endpoints")
   void adminCanLogIn() throws Exception {
     LoginRequest loginReq = new LoginRequest("[email protected]", "it-admin-pw");
-    HttpHeaders headers = new HttpHeaders();
-    headers.setContentType(MediaType.APPLICATION_JSON);
     
-    ResponseEntity<AuthResponse> login =
-        http.postForEntity(
-            "/api/auth/login",
-            new HttpEntity<>(json.writeValueAsString(loginReq), headers),
-            AuthResponse.class);
+    ResponseEntity<AuthResponse> login = http.exchange(
+        "/api/auth/login",
+        HttpMethod.POST,
+        new HttpEntity<>(json.writeValueAsString(loginReq), jsonHeaders()),
+        AuthResponse.class);
 
     assertThat(login.getStatusCode()).isEqualTo(HttpStatus.OK);
     assertThat(login.getBody()).isNotNull();
@@ -87,10 +83,7 @@ class AuthFlowIT extends PostgresIntegrationTest {
 
   @Test
   @DisplayName("Registering with a role hint never grants ADMIN")
-  void publicRegistrationCannotEscalate() {
-    // The DTO has no role field, so this raw JSON includes a stray
-    // attribute that the server must ignore. Jackson will drop it by
-    // default; the test makes the silent ignore explicit.
+  void publicRegistrationCannotEscalate() throws Exception {
     String maliciousJson =
         """
                 {
@@ -100,11 +93,12 @@ class AuthFlowIT extends PostgresIntegrationTest {
                   "role": "ADMIN"
                 }
                 """;
-    HttpHeaders h = new HttpHeaders();
-    h.setContentType(MediaType.APPLICATION_JSON);
-    ResponseEntity<AuthResponse> resp =
-        http.postForEntity(
-            "/api/auth/register", new HttpEntity<>(maliciousJson, h), AuthResponse.class);
+    
+    ResponseEntity<AuthResponse> resp = http.exchange(
+        "/api/auth/register",
+        HttpMethod.POST,
+        new HttpEntity<>(maliciousJson, jsonHeaders()),
+        AuthResponse.class);
 
     assertThat(resp.getStatusCode()).isEqualTo(HttpStatus.CREATED);
     assertThat(resp.getBody().role()).isEqualTo(Role.BUYER);
@@ -115,29 +109,32 @@ class AuthFlowIT extends PostgresIntegrationTest {
   void wrongPasswordDoesNotLeakAccountExistence() throws Exception {
     LoginRequest wrongPassword = new LoginRequest("[email protected]", "totally-wrong");
     LoginRequest nonExisting = new LoginRequest("[email protected]", "any");
-    HttpHeaders headers = new HttpHeaders();
-    headers.setContentType(MediaType.APPLICATION_JSON);
     
-    var existing =
-        http.postForEntity(
-            "/api/auth/login",
-            new HttpEntity<>(json.writeValueAsString(wrongPassword), headers),
-            Map.class);
-    var nonExist =
-        http.postForEntity(
-            "/api/auth/login",
-            new HttpEntity<>(json.writeValueAsString(nonExisting), headers),
-            Map.class);
+    var existing = http.exchange(
+        "/api/auth/login",
+        HttpMethod.POST,
+        new HttpEntity<>(json.writeValueAsString(wrongPassword), jsonHeaders()),
+        Map.class);
+    var nonExist = http.exchange(
+        "/api/auth/login",
+        HttpMethod.POST,
+        new HttpEntity<>(json.writeValueAsString(nonExisting), jsonHeaders()),
+        Map.class);
 
     assertThat(existing.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
     assertThat(nonExist.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
-    // Both responses must carry the same generic message.
     assertThat(existing.getBody().get("message"))
         .isEqualTo(nonExist.getBody().get("message"))
         .isEqualTo("Invalid email or password");
   }
 
   // ---- helpers ----
+
+  private static HttpHeaders jsonHeaders() {
+    HttpHeaders headers = new HttpHeaders();
+    headers.setContentType(MediaType.APPLICATION_JSON);
+    return headers;
+  }
 
   private static HttpEntity<Void> bearer(String token) {
     HttpHeaders h = new HttpHeaders();
