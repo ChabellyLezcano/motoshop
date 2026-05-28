@@ -1,6 +1,18 @@
 package com.motoshop.api.catalog;
 
+import java.math.BigDecimal;
+
 import static org.assertj.core.api.Assertions.assertThat;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -12,17 +24,6 @@ import com.motoshop.api.catalog.model.Cooling;
 import com.motoshop.api.catalog.model.EngineType;
 import com.motoshop.api.catalog.model.LicenseType;
 import com.motoshop.api.support.PostgresIntegrationTest;
-import java.math.BigDecimal;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.web.client.TestRestTemplate;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class MotorcycleCatalogIT extends PostgresIntegrationTest {
@@ -119,11 +120,15 @@ class MotorcycleCatalogIT extends PostgresIntegrationTest {
     assertThat(json.readTree(resp.getBody()).get("fieldErrors")).isNotNull();
   }
 
-  private String loginAsAdmin() {
+  private String loginAsAdmin() throws Exception {
+    LoginRequest loginReq = new LoginRequest("[email protected]", "it-admin-pw");
+    HttpHeaders headers = new HttpHeaders();
+    headers.setContentType(MediaType.APPLICATION_JSON);
+    
     var resp =
         http.postForEntity(
             "/api/auth/login",
-            new LoginRequest("[email protected]", "it-admin-pw"),
+            new HttpEntity<>(json.writeValueAsString(loginReq), headers),
             AuthResponse.class);
     assertThat(resp.getStatusCode()).isEqualTo(HttpStatus.OK);
     return resp.getBody().token();

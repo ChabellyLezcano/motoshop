@@ -1,12 +1,8 @@
 package com.motoshop.api.auth;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
-import com.motoshop.api.auth.dto.AuthResponse;
-import com.motoshop.api.auth.dto.LoginRequest;
-import com.motoshop.api.auth.dto.RegisterRequest;
-import com.motoshop.api.support.PostgresIntegrationTest;
 import java.util.Map;
+
+import static org.assertj.core.api.Assertions.assertThat;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,6 +15,12 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.motoshop.api.auth.dto.AuthResponse;
+import com.motoshop.api.auth.dto.LoginRequest;
+import com.motoshop.api.auth.dto.RegisterRequest;
+import com.motoshop.api.support.PostgresIntegrationTest;
+
 /**
  * End-to-end integration test of the Sprint 1 identity flow against a real Postgres + Flyway +
  * Spring context. Run with {@code mvn verify}.
@@ -27,15 +29,20 @@ import org.springframework.http.ResponseEntity;
 class AuthFlowIT extends PostgresIntegrationTest {
 
   @Autowired TestRestTemplate http;
+  @Autowired ObjectMapper json;
 
   @Test
   @DisplayName("Buyer can register, log in and call /me; cannot create motorcycles")
-  void buyerHappyPathAndAuthorisationBoundary() {
+  void buyerHappyPathAndAuthorisationBoundary() throws Exception {
     // ---- register ----
+    RegisterRequest registerReq = new RegisterRequest("[email protected]", "buyerpass1", "Ivan Buyer");
+    HttpHeaders headers = new HttpHeaders();
+    headers.setContentType(MediaType.APPLICATION_JSON);
+    
     ResponseEntity<AuthResponse> registered =
         http.postForEntity(
             "/api/auth/register",
-            new RegisterRequest("[email protected]", "buyerpass1", "Ivan Buyer"),
+            new HttpEntity<>(json.writeValueAsString(registerReq), headers),
             AuthResponse.class);
 
     assertThat(registered.getStatusCode()).isEqualTo(HttpStatus.CREATED);
@@ -62,11 +69,15 @@ class AuthFlowIT extends PostgresIntegrationTest {
 
   @Test
   @DisplayName("Seeded admin can log in and reach admin-only endpoints")
-  void adminCanLogIn() {
+  void adminCanLogIn() throws Exception {
+    LoginRequest loginReq = new LoginRequest("[email protected]", "it-admin-pw");
+    HttpHeaders headers = new HttpHeaders();
+    headers.setContentType(MediaType.APPLICATION_JSON);
+    
     ResponseEntity<AuthResponse> login =
         http.postForEntity(
             "/api/auth/login",
-            new LoginRequest("[email protected]", "it-admin-pw"),
+            new HttpEntity<>(json.writeValueAsString(loginReq), headers),
             AuthResponse.class);
 
     assertThat(login.getStatusCode()).isEqualTo(HttpStatus.OK);
@@ -101,19 +112,28 @@ class AuthFlowIT extends PostgresIntegrationTest {
 
   @Test
   @DisplayName("Wrong password yields a generic 401 — no account enumeration")
-  void wrongPasswordDoesNotLeakAccountExistence() {
+  void wrongPasswordDoesNotLeakAccountExistence() throws Exception {
+    LoginRequest wrongPassword = new LoginRequest("[email protected]", "totally-wrong");
+    LoginRequest nonExisting = new LoginRequest("[email protected]", "any");
+    HttpHeaders headers = new HttpHeaders();
+    headers.setContentType(MediaType.APPLICATION_JSON);
+    
     var existing =
         http.postForEntity(
-            "/api/auth/login", new LoginRequest("[email protected]", "totally-wrong"), Map.class);
-    var nonExisting =
+            "/api/auth/login",
+            new HttpEntity<>(json.writeValueAsString(wrongPassword), headers),
+            Map.class);
+    var nonExist =
         http.postForEntity(
-            "/api/auth/login", new LoginRequest("[email protected]", "any"), Map.class);
+            "/api/auth/login",
+            new HttpEntity<>(json.writeValueAsString(nonExisting), headers),
+            Map.class);
 
     assertThat(existing.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
-    assertThat(nonExisting.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
+    assertThat(nonExist.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
     // Both responses must carry the same generic message.
     assertThat(existing.getBody().get("message"))
-        .isEqualTo(nonExisting.getBody().get("message"))
+        .isEqualTo(nonExist.getBody().get("message"))
         .isEqualTo("Invalid email or password");
   }
 
