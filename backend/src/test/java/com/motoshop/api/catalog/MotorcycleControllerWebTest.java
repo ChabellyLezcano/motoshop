@@ -42,8 +42,6 @@ class MotorcycleControllerWebTest {
 
   @MockBean MotorcycleService service;
 
-  // -------- public read access --------
-
   @Test
   @WithAnonymousUser
   void anonymousCanListCatalog() throws Exception {
@@ -75,8 +73,6 @@ class MotorcycleControllerWebTest {
         .andExpect(jsonPath("$.error").value("Not Found"))
         .andExpect(jsonPath("$.message").value("Motorcycle not found: 9999"));
   }
-
-  // -------- authorisation matrix on write endpoints --------
 
   @Test
   @WithAnonymousUser
@@ -122,8 +118,6 @@ class MotorcycleControllerWebTest {
   void adminCanDelete() throws Exception {
     mvc.perform(delete("/api/motorcycles/1")).andExpect(status().isNoContent());
   }
-
-  // -------- helpers --------
 
   private static MotorcycleResponse sampleResponse() {
     return new MotorcycleResponse(

@@ -20,10 +20,6 @@ import com.motoshop.api.auth.dto.LoginRequest;
 import com.motoshop.api.auth.dto.RegisterRequest;
 import com.motoshop.api.support.PostgresIntegrationTest;
 
-/**
- * End-to-end integration test of the Sprint 1 identity flow against a real Postgres + Flyway +
- * Spring context. Run with {@code mvn verify}.
- */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 class AuthFlowIT extends PostgresIntegrationTest {
 
@@ -32,7 +28,6 @@ class AuthFlowIT extends PostgresIntegrationTest {
   @Test
   @DisplayName("Buyer can register, log in and call /me; cannot create motorcycles")
   void buyerHappyPathAndAuthorisationBoundary() {
-    // ---- register ----
     RegisterRequest registerReq = new RegisterRequest("[email protected]", "buyerpass1", "Ivan Buyer");
     
     ResponseEntity<AuthResponse> registered =
@@ -44,7 +39,6 @@ class AuthFlowIT extends PostgresIntegrationTest {
     String buyerToken = registered.getBody().token();
     assertThat(buyerToken).isNotBlank();
 
-    // ---- /me with the issued token ----
     ResponseEntity<Map> me =
         http.exchange("/api/auth/me", HttpMethod.GET, bearer(buyerToken), Map.class);
 
@@ -52,7 +46,6 @@ class AuthFlowIT extends PostgresIntegrationTest {
     assertThat(me.getBody()).containsEntry("email", "[email protected]");
     assertThat(me.getBody()).containsEntry("role", "BUYER");
 
-    // ---- buyer cannot create motorcycles ----
     ResponseEntity<String> forbidden =
         http.exchange(
             "/api/motorcycles", HttpMethod.POST, bearerWithBody(buyerToken, "{}"), String.class);
@@ -110,8 +103,6 @@ class AuthFlowIT extends PostgresIntegrationTest {
         .isEqualTo(nonExist.getBody().get("message"))
         .isEqualTo("Invalid email or password");
   }
-
-  // ---- helpers ----
 
   private static HttpEntity<Void> bearer(String token) {
     HttpHeaders h = new HttpHeaders();

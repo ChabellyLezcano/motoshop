@@ -31,10 +31,9 @@ public class Motorcycle {
   @Column(nullable = false)
   private Integer displacement;
 
-@Column(name = "`year`", nullable = false)
-private Integer year;
+  @Column(name = "`year`", nullable = false)
+  private Integer year;
 
-  /** Price in cents to avoid floating-point arithmetic on money. */
   @Column(name = "price_cents", nullable = false)
   private Long priceCents;
 
@@ -44,14 +43,9 @@ private Integer year;
   @Column(columnDefinition = "TEXT")
   private String description;
 
-  /**
-   * Object key in MinIO. Null in Sprint 1, populated in Sprint 2 when the image upload flow is
-   * wired up.
-   */
   @Column(name = "image_key", length = 255)
   private String imageKey;
 
-  // -------- Engine / performance --------
   @Column(name = "power_hp", nullable = false)
   private Integer powerHp;
 
@@ -69,21 +63,18 @@ private Integer year;
   @Column(nullable = false, length = 16)
   private Cooling cooling;
 
-  // -------- Physical --------
   @Column(name = "weight_kg", nullable = false)
   private Integer weightKg;
 
   @Column(name = "seat_height_mm", nullable = false)
   private Integer seatHeightMm;
 
-  /** Fuel tank capacity in liters with one decimal (e.g. 14.5). */
   @Column(name = "fuel_capacity_l", nullable = false, precision = 4, scale = 1)
   private BigDecimal fuelCapacityL;
 
   @Column(nullable = false, length = 50)
   private String color;
 
-  // -------- Classification --------
   @Enumerated(EnumType.STRING)
   @Column(nullable = false, length = 32)
   private Category category;
@@ -92,7 +83,6 @@ private Integer year;
   @Column(nullable = false, length = 4)
   private LicenseType license;
 
-  // -------- Transmission / electronics --------
   @Column(nullable = false)
   private Integer transmission;
 
@@ -108,9 +98,7 @@ private Integer year;
   @Column(name = "updated_at", nullable = false)
   private Instant updatedAt;
 
-  public Motorcycle() {
-    // required by JPA
-  }
+  public Motorcycle() {}
 
   @PrePersist
   void onCreate() {
@@ -124,7 +112,6 @@ private Integer year;
     this.updatedAt = Instant.now();
   }
 
-  // ---- getters ----
   public Long getId() {
     return id;
   }
@@ -225,7 +212,6 @@ private Integer year;
     return updatedAt;
   }
 
-  // ---- setters ----
   public void setBrand(String brand) {
     this.brand = brand;
   }
