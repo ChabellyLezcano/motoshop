@@ -15,7 +15,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.motoshop.api.auth.dto.AuthResponse;
 import com.motoshop.api.auth.dto.LoginRequest;
 import com.motoshop.api.auth.dto.RegisterRequest;
@@ -29,19 +28,15 @@ import com.motoshop.api.support.PostgresIntegrationTest;
 class AuthFlowIT extends PostgresIntegrationTest {
 
   @Autowired TestRestTemplate http;
-  @Autowired ObjectMapper json;
 
   @Test
   @DisplayName("Buyer can register, log in and call /me; cannot create motorcycles")
-  void buyerHappyPathAndAuthorisationBoundary() throws Exception {
+  void buyerHappyPathAndAuthorisationBoundary() {
     // ---- register ----
     RegisterRequest registerReq = new RegisterRequest("[email protected]", "buyerpass1", "Ivan Buyer");
     
-    ResponseEntity<AuthResponse> registered = http.exchange(
-        "/api/auth/register",
-        HttpMethod.POST,
-        new HttpEntity<>(json.writeValueAsString(registerReq), jsonHeaders()),
-        AuthResponse.class);
+    ResponseEntity<AuthResponse> registered =
+        http.postForEntity("/api/auth/register", registerReq, AuthResponse.class);
 
     assertThat(registered.getStatusCode()).isEqualTo(HttpStatus.CREATED);
     assertThat(registered.getBody()).isNotNull();
@@ -67,14 +62,11 @@ class AuthFlowIT extends PostgresIntegrationTest {
 
   @Test
   @DisplayName("Seeded admin can log in and reach admin-only endpoints")
-  void adminCanLogIn() throws Exception {
+  void adminCanLogIn() {
     LoginRequest loginReq = new LoginRequest("[email protected]", "it-admin-pw");
     
-    ResponseEntity<AuthResponse> login = http.exchange(
-        "/api/auth/login",
-        HttpMethod.POST,
-        new HttpEntity<>(json.writeValueAsString(loginReq), jsonHeaders()),
-        AuthResponse.class);
+    ResponseEntity<AuthResponse> login =
+        http.postForEntity("/api/auth/login", loginReq, AuthResponse.class);
 
     assertThat(login.getStatusCode()).isEqualTo(HttpStatus.OK);
     assertThat(login.getBody()).isNotNull();
@@ -83,7 +75,7 @@ class AuthFlowIT extends PostgresIntegrationTest {
 
   @Test
   @DisplayName("Registering with a role hint never grants ADMIN")
-  void publicRegistrationCannotEscalate() throws Exception {
+  void publicRegistrationCannotEscalate() {
     String maliciousJson =
         """
                 {
@@ -93,12 +85,11 @@ class AuthFlowIT extends PostgresIntegrationTest {
                   "role": "ADMIN"
                 }
                 """;
-    
-    ResponseEntity<AuthResponse> resp = http.exchange(
-        "/api/auth/register",
-        HttpMethod.POST,
-        new HttpEntity<>(maliciousJson, jsonHeaders()),
-        AuthResponse.class);
+    HttpHeaders h = new HttpHeaders();
+    h.setContentType(MediaType.APPLICATION_JSON);
+    ResponseEntity<AuthResponse> resp =
+        http.postForEntity(
+            "/api/auth/register", new HttpEntity<>(maliciousJson, h), AuthResponse.class);
 
     assertThat(resp.getStatusCode()).isEqualTo(HttpStatus.CREATED);
     assertThat(resp.getBody().role()).isEqualTo(Role.BUYER);
@@ -106,20 +97,12 @@ class AuthFlowIT extends PostgresIntegrationTest {
 
   @Test
   @DisplayName("Wrong password yields a generic 401 — no account enumeration")
-  void wrongPasswordDoesNotLeakAccountExistence() throws Exception {
+  void wrongPasswordDoesNotLeakAccountExistence() {
     LoginRequest wrongPassword = new LoginRequest("[email protected]", "totally-wrong");
     LoginRequest nonExisting = new LoginRequest("[email protected]", "any");
     
-    var existing = http.exchange(
-        "/api/auth/login",
-        HttpMethod.POST,
-        new HttpEntity<>(json.writeValueAsString(wrongPassword), jsonHeaders()),
-        Map.class);
-    var nonExist = http.exchange(
-        "/api/auth/login",
-        HttpMethod.POST,
-        new HttpEntity<>(json.writeValueAsString(nonExisting), jsonHeaders()),
-        Map.class);
+    var existing = http.postForEntity("/api/auth/login", wrongPassword, Map.class);
+    var nonExist = http.postForEntity("/api/auth/login", nonExisting, Map.class);
 
     assertThat(existing.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
     assertThat(nonExist.getStatusCode()).isEqualTo(HttpStatus.UNAUTHORIZED);
@@ -129,12 +112,6 @@ class AuthFlowIT extends PostgresIntegrationTest {
   }
 
   // ---- helpers ----
-
-  private static HttpHeaders jsonHeaders() {
-    HttpHeaders headers = new HttpHeaders();
-    headers.setContentType(MediaType.APPLICATION_JSON);
-    return headers;
-  }
 
   private static HttpEntity<Void> bearer(String token) {
     HttpHeaders h = new HttpHeaders();
